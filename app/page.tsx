@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { mockMenuItems } from "../lib/mock-menu-items";
 import { recommendMeals, type Recommendation } from "../lib/recommend-meals";
+import { AppHeader } from "../components/AppHeader";
+import { LandingHero } from "../components/LandingHero";
+import { RestaurantMarquee } from "../components/RestaurantMarquee";
 
 const restaurants = ["Chipotle", "Chick-fil-A", "Panera", "McDonald's", "Taco Bell"];
 
@@ -37,19 +40,25 @@ function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
 }
 
   return (
-    <main className="min-h-screen bg-zinc-950px-6 py-12 text-zinc-100">
-      <div className="mx-auto max-w-3xl">
-        <header className="mb-10 text-center">
-          <p className="mb-2 text-sm font-bold tracking-widest text-orange-400">
-            CALORIE COMPASS
-          </p>
-          <h1 className="text-4xl font-bold tracking-tight">
-            What fits your macros today?
-          </h1>
-          <p className="mt-3 text-lg text-white">
-            Enter what you have left for the day and find restaurant meals that fit.
-          </p>
-        </header>
+    <main className="min-h-screen bg-zinc-950 text-zinc-100">
+      <AppHeader />
+      <LandingHero />
+      <RestaurantMarquee />
+      <div
+       id="planner"
+       className="mx-auto max-w-3xl scroll-mt-24 px-6 pb-24 pt-20"
+      >
+        <header className="mb-8">
+        <p className="text-sm font-bold tracking-widest text-orange-400">
+         PLAN YOUR MEAL
+        </p>
+       <h2 className="mt-2 text-3xl font-bold tracking-tight text-white">
+         What do you have left today?
+        </h2>
+        <p className="mt-3 text-lg text-zinc-300">
+          Set your remaining macros and we’ll rank restaurant options that fit.
+        </p>
+      </header>
 
         <form
           onSubmit={handleSubmit}
