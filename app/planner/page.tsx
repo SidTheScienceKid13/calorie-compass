@@ -18,6 +18,9 @@ export default function Home() {
   const [selectedRestaurants, setSelectedRestaurants] = useState<string[]>(restaurants);
   const [hasSearched, setHasSearched] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [aiExplanations, setAiExplanations] = useState<Record<string, string>>({});
+  const [explainingId, setExplainingId] = useState<string | null>(null);
+  const [explanationErrors, setExplanationErrors] = useState<Record<string, string>>({});
 
   function toggleRestaurant(restaurant: string) {
     setSelectedRestaurants((current) =>
@@ -38,6 +41,66 @@ function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
 
   setRecommendations(results);
   setHasSearched(true);
+}
+
+async function explainWhyThisFits(item: Recommendation) {
+  if (aiExplanations[item.id]) {
+    return;
+  }
+
+  setExplainingId(item.id);
+  setExplanationErrors((current) => ({
+    ...current,
+    [item.id]: "",
+  }));
+
+  try {
+    const response = await fetch("/api/explain-meal", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        meal: {
+          restaurant: item.restaurant,
+          name: item.name,
+          calories: item.calories,
+          protein: item.protein,
+          carbs: item.carbs,
+          fat: item.fat,
+          fitScore: item.fitScore,
+          deterministicExplanation: item.explanation,
+        },
+        remaining: {
+          calories,
+          protein,
+          carbs,
+          fat,
+        },
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error ?? "Unable to generate an explanation.");
+    }
+
+    setAiExplanations((current) => ({
+      ...current,
+      [item.id]: data.explanation,
+    }));
+  } catch (error) {
+    setExplanationErrors((current) => ({
+      ...current,
+      [item.id]:
+        error instanceof Error
+          ? error.message
+          : "Unable to generate an explanation.",
+    }));
+  } finally {
+    setExplainingId(null);
+  }
 }
 
   return (
@@ -185,6 +248,41 @@ function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
             </div>
 
             <p className="mt-4 text-sm text-white">{item.explanation}</p>
+            <div className="mt-4 border-t border-white/10 pt-4">
+                <button
+                    type="button"
+                    onClick={() => explainWhyThisFits(item)}
+                    disabled={explainingId === item.id || Boolean(aiExplanations[item.id])}
+                    className="rounded-lg border border-orange-500/40 px-3 py-2 text-sm font-semibold text-orange-300 transition hover:bg-orange-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                    {explainingId === item.id
+                    ? "Writing explanation..."
+                    : aiExplanations[item.id]
+                    ? "Explanation generated"
+                    : "Why this fits"}
+                </button>
+
+                {aiExplanations[item.id] && (
+                <div className="mt-3 rounded-xl border border-orange-500/20 bg-orange-500/10 p-3">
+                <p className="text-xs font-bold uppercase tracking-wide text-orange-300">
+                AI explanation
+                </p>
+                <p className="mt-1 text-sm leading-6 text-zinc-200">
+                {aiExplanations[item.id]}
+                </p>
+                <p className="mt-2 text-xs text-zinc-400">
+                Nutrition values and fit score are calculated by Calorie Compass.
+                </p>
+            </div>
+  )}
+
+            {explanationErrors[item.id] && (
+                <p className="mt-3 text-sm text-red-300">
+            {explanationErrors[item.id]}
+            </p>
+        )}
+        </div>
+        
           </article>
         ))}
       </div>
