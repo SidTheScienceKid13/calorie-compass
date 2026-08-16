@@ -1,4 +1,5 @@
-import { Compass, GitBranch } from "lucide-react";
+import { Compass } from "lucide-react";
+import { FaGithub } from "react-icons/fa";
 
 export function AppHeader() {
   return (
@@ -15,12 +16,12 @@ export function AppHeader() {
         </a>
 
         <div className="flex items-center gap-5">
-          <a
-            href="#how-it-works"
-            className="hidden text-sm text-zinc-300 transition hover:text-white sm:block"
-          >
+        <a
+            href="/how-it-works"
+            className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-zinc-300 transition hover:border-orange-400 hover:text-white"
+        >
             How it works
-          </a>
+        </a>
 
           <a
             href="https://github.com/SidTheScienceKid13/calorie-compass"
@@ -29,7 +30,7 @@ export function AppHeader() {
             aria-label="View Calorie Compass source code on GitHub"
             className="rounded-lg border border-white/10 p-2 text-zinc-300 transition hover:border-orange-500 hover:text-orange-400"
           >
-            <GitBranch size={18} />
+            <FaGithub size={18} />
           </a>
         </div>
       </nav>
