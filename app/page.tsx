@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { mockMenuItems } from "../lib/mock-menu-items";
+import { recommendMeals, type Recommendation } from "../lib/recommend-meals";
 
 const restaurants = ["Chipotle", "Chick-fil-A", "Panera", "McDonald's", "Taco Bell"];
 
@@ -11,6 +13,7 @@ export default function Home() {
   const [fat, setFat] = useState(30);
   const [selectedRestaurants, setSelectedRestaurants] = useState<string[]>(restaurants);
   const [hasSearched, setHasSearched] = useState(false);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
 
   function toggleRestaurant(restaurant: string) {
     setSelectedRestaurants((current) =>
@@ -20,33 +23,41 @@ export default function Home() {
     );
   }
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setHasSearched(true);
-  }
+function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+
+  const results = recommendMeals(
+    mockMenuItems,
+    { calories, protein, carbs, fat },
+    selectedRestaurants
+  );
+
+  setRecommendations(results);
+  setHasSearched(true);
+}
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-12 text-slate-900">
+    <main className="min-h-screen bg-zinc-950px-6 py-12 text-zinc-100">
       <div className="mx-auto max-w-3xl">
         <header className="mb-10 text-center">
-          <p className="mb-2 text-sm font-bold tracking-widest text-emerald-600">
+          <p className="mb-2 text-sm font-bold tracking-widest text-orange-400">
             CALORIE COMPASS
           </p>
           <h1 className="text-4xl font-bold tracking-tight">
             What fits your macros today?
           </h1>
-          <p className="mt-3 text-lg text-slate-600">
+          <p className="mt-3 text-lg text-white">
             Enter what you have left for the day and find restaurant meals that fit.
           </p>
         </header>
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-3xl bg-white p-6 shadow-sm sm:p-8"
+          className="rounded-3xl bg-zinc-900 p-6 shadow-sm sm:p-8"
         >
           <section>
             <h2 className="text-xl font-bold">Remaining daily macros</h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-white">
               These are the nutrients you still want available for your next meal.
             </p>
 
@@ -99,7 +110,7 @@ export default function Home() {
 
           <section className="mt-8">
             <h2 className="text-xl font-bold">Where are you thinking of eating?</h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-white">
               Select one or more restaurant chains.
             </p>
 
@@ -114,8 +125,8 @@ export default function Home() {
                     onClick={() => toggleRestaurant(restaurant)}
                     className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                       selected
-                        ? "border-emerald-600 bg-emerald-600 text-white"
-                        : "border-slate-200 bg-white text-slate-600 hover:border-emerald-400"
+                        ? "border-orange-500 bg-orange-500 text-white"
+                        : "border-zinc-700 bg-zinc-900 text-zinc-200 hover:border-orange-400"
                     }`}
                   >
                     {restaurant}
@@ -128,20 +139,51 @@ export default function Home() {
           <button
             type="submit"
             disabled={selectedRestaurants.length === 0}
-            className="mt-8 w-full rounded-xl bg-emerald-600 px-5 py-4 font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="mt-8 w-full rounded-xl bg-orange-500 px-5 py-4 font-bold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-zinc-700"
           >
             Find meals that fit
           </button>
         </form>
 
         {hasSearched && (
-          <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-950">
-            Searching {selectedRestaurants.length} restaurant
-            {selectedRestaurants.length === 1 ? "" : "s"} for meals under{" "}
-            <strong>{calories} calories</strong> with up to <strong>{protein}g protein</strong>,
-            {" "}<strong>{carbs}g carbs</strong>, and <strong>{fat}g fat</strong>.
-          </div>
-        )}
+  <section className="mt-6">
+    <h2 className="mb-4 text-xl font-bold">Your best restaurant options</h2>
+
+    {recommendations.length === 0 ? (
+      <p className="rounded-xl bg-white p-5 text-slate-600 shadow-sm">
+        No menu items matched those restaurant selections.
+      </p>
+    ) : (
+      <div className="grid gap-4 sm:grid-cols-2">
+        {recommendations.map((item) => (
+          <article key={item.id} className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-orange-400">
+                  {item.restaurant}
+                </p>
+                <h3 className="mt-1 text-lg font-bold">{item.name}</h3>
+              </div>
+
+              <span className="rounded-full bg-orange-500/15 px-3 py-1 text-sm font-bold text-orange-300">
+                {item.fitScore}% fit
+              </span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-4 gap-2 text-center text-sm">
+              <div><strong>{item.calories}</strong><br />cal</div>
+              <div><strong>{item.protein}g</strong><br />protein</div>
+              <div><strong>{item.carbs}g</strong><br />carbs</div>
+              <div><strong>{item.fat}g</strong><br />fat</div>
+            </div>
+
+            <p className="mt-4 text-sm text-white">{item.explanation}</p>
+          </article>
+        ))}
+      </div>
+    )}
+  </section>
+)}
       </div>
     </main>
   );
