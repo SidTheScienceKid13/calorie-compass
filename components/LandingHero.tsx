@@ -1,10 +1,22 @@
-import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, Compass } from "lucide-react";
 import { MacroBeforeAfter } from "./MacroBeforeAfter";
 
 export function LandingHero() {
   return (
     <section className="overflow-hidden border-b border-white/10">
-      <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 py-20 lg:grid-cols-2 lg:py-28">
+        <div className="mx-auto flex max-w-6xl justify-center px-6 pt-10 sm:pt-12">
+            <div className="flex items-center gap-3">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-500 text-black shadow-lg shadow-orange-500/20">
+                    <Compass size={30} strokeWidth={2.5} />
+                </div>
+
+                <span className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+                    Calorie Compass
+                </span>
+            </div>
+        </div>
+
+      <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-6 pb-20 pt-10 lg:pb-28 lg:pt-14">
         <div>
 
           <h1 className="max-w-xl text-5xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-6xl">
