@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { mockMenuItems } from "../../lib/mock-menu-items";
+import {
+  mockMenuItems,
+  type MenuItem,
+} from "../../lib/mock-menu-items";
 import {
   recommendMeals,
   type Recommendation,
@@ -9,6 +12,26 @@ import {
 import { AppHeader } from "../../components/AppHeader";
 
 const restaurants = ["Chipotle", "Chick-fil-A", "Panera", "McDonald's", "Taco Bell"];
+type FoodSearchResponse = {
+  items?: MenuItem[];
+  error?: string;
+};
+
+async function fetchRestaurantMeals(
+  restaurant: string
+): Promise<MenuItem[]> {
+  const response = await fetch(
+    `/api/food-search?restaurant=${encodeURIComponent(restaurant)}`
+  );
+
+  const data = (await response.json()) as FoodSearchResponse;
+
+  if (!response.ok) {
+    throw new Error(data.error ?? `Unable to load ${restaurant} meals.`);
+  }
+
+  return data.items ?? [];
+}
 
 export default function Home() {
   const [calories, setCalories] = useState(900);
@@ -21,6 +44,9 @@ export default function Home() {
   const [aiExplanations, setAiExplanations] = useState<Record<string, string>>({});
   const [explainingId, setExplainingId] = useState<string | null>(null);
   const [explanationErrors, setExplanationErrors] = useState<Record<string, string>>({});
+  const [isSearching, setIsSearching] = useState(false);
+  const [usingLiveData, setUsingLiveData] = useState(false);
+  const [searchMessage, setSearchMessage] = useState<string | null>(null);
 
   function toggleRestaurant(restaurant: string) {
     setSelectedRestaurants((current) =>
@@ -30,17 +56,61 @@ export default function Home() {
     );
   }
 
-function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
   event.preventDefault();
 
-  const results = recommendMeals(
-    mockMenuItems,
-    { calories, protein, carbs, fat },
-    selectedRestaurants
-  );
+  setIsSearching(true);
+  setSearchMessage(null);
+  setAiExplanations({});
+  setExplanationErrors({});
 
-  setRecommendations(results);
-  setHasSearched(true);
+  try {
+    const settledSearches = await Promise.allSettled(
+      selectedRestaurants.map(fetchRestaurantMeals)
+    );
+
+    const liveItems = settledSearches.flatMap((result) =>
+      result.status === "fulfilled" ? result.value : []
+    );
+
+    const failedSearches = settledSearches.filter(
+      (result) => result.status === "rejected"
+    ).length;
+
+    if (liveItems.length > 0) {
+      const results = recommendMeals(
+        liveItems,
+        { calories, protein, carbs, fat },
+        selectedRestaurants
+      );
+
+      setRecommendations(results);
+      setUsingLiveData(true);
+
+      if (failedSearches > 0) {
+        setSearchMessage(
+          "Some restaurant searches were unavailable. Showing the live matches that loaded successfully."
+        );
+      }
+    } else {
+      throw new Error("No live restaurant meals were found.");
+    }
+  } catch {
+    const fallbackResults = recommendMeals(
+      mockMenuItems,
+      { calories, protein, carbs, fat },
+      selectedRestaurants
+    );
+
+    setRecommendations(fallbackResults);
+    setUsingLiveData(false);
+    setSearchMessage(
+      "Live nutrition data is unavailable right now, so Calorie Compass is showing representative fallback menu data."
+    );
+  } finally {
+    setHasSearched(true);
+    setIsSearching(false);
+  }
 }
 
 async function explainWhyThisFits(item: Recommendation) {
@@ -208,16 +278,36 @@ async function explainWhyThisFits(item: Recommendation) {
 
           <button
             type="submit"
-            disabled={selectedRestaurants.length === 0}
+            disabled={selectedRestaurants.length === 0 || isSearching}
             className="mt-8 w-full rounded-xl bg-orange-500 px-5 py-4 font-bold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-zinc-700"
           >
-            Find meals that fit
+            {isSearching ? "Finding live meals..." : "Find meals that fit"}
           </button>
         </form>
 
         {hasSearched && (
   <section className="mt-6">
     <h2 className="mb-4 text-xl font-bold">Your best restaurant options</h2>
+    {usingLiveData && (
+  <p className="mb-4 text-sm text-zinc-400">
+    Live nutrition data powered by{" "}
+    <a
+      href="https://platform.fatsecret.com/"
+      target="_blank"
+      rel="noreferrer"
+      className="text-orange-400 underline underline-offset-4 hover:text-orange-300"
+    >
+      FatSecret
+    </a>
+    .
+  </p>
+)}
+
+{searchMessage && (
+  <p className="mb-4 rounded-xl border border-orange-500/20 bg-orange-500/10 p-3 text-sm text-orange-100">
+    {searchMessage}
+  </p>
+)}
 
     {recommendations.length === 0 ? (
       <p className="rounded-xl bg-white p-5 text-slate-600 shadow-sm">
