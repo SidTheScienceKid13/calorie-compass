@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     },
     body: new URLSearchParams({
       grant_type: "client_credentials",
-      scope: "basic",
+      scope: "premier",
     }),
   });
 
