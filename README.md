@@ -1,23 +1,24 @@
 # Calorie Compass
 
-Calorie Compass is a restaurant nutrition recommendation web app that helps users find menu items that fit their remaining daily calories and macronutrients.
+Calorie Compass is a restaurant nutrition recommendation web app that helps users find restaurant meals that fit their remaining daily calories and macronutrients.
 
-Instead of logging every meal, users enter what they have left for the day, choose restaurant chains, and receive ranked menu recommendations with macro-fit scores and clear explanations.
+Instead of logging every meal, users enter what they have left for the day, choose restaurant chains, and receive ranked meal recommendations with macro-fit scores and clear explanations.
 
 ## Current MVP
 
 * Enter remaining calories, protein, carbs, and fat
 * Select one or more restaurant chains
-* Filter and rank menu items by macro fit
+* Fetch and normalize live restaurant nutrition data through the FatSecret Platform API
+* Filter and rank meal candidates by macro fit
 * View macro breakdowns, fit scores, and recommendation explanations
-* Generate an optional AI-powered “Why this fits” explanation for a recommendation
-* Keep nutrition values, rankings, and fit scores deterministic and transparent
-* Explore a responsive landing page with a macro before-and-after preview
+* Generate an optional Gemini-powered “Why this fits” explanation for a recommendation
+* Keep calorie calculations, rankings, and fit scores deterministic and transparent
+* Fall back to representative menu data if live nutrition data is unavailable
+* Explore a responsive landing page with a macro before-and-after product preview
 * Use dedicated landing, “How It Works,” and meal-planner routes
 * Dark, accessible UI built with Next.js, TypeScript, and Tailwind CSS
-* Validate FatSecret OAuth authentication server-side during local development
 
-> **Data status:** The current recommendation interface uses representative mock menu data while FatSecret Premier Free approval is pending. The Gemini integration is an optional server-side explanation layer; it does not calculate nutrition values, fit scores, or rankings.
+> **Data status:** Live restaurant food search is integrated through FatSecret Premier Free access. Results are normalized into a common menu-item format and filtered to prioritize meal-like items over individual ingredients. If a live request is unavailable, the planner uses representative fallback data so the core recommendation flow remains usable.
 
 ## Demo Flow
 
@@ -26,22 +27,24 @@ Landing page
     ↓
 Enter remaining macros + select restaurants
     ↓
+Fetch and normalize live restaurant meal data
+    ↓
 Filter eligible menu items
     ↓
 Score macro overages and rank best fits
     ↓
 Display personalized restaurant recommendations
     ↓
-Optionally generate a “Why this fits” explanation
+Optionally generate a Gemini “Why this fits” explanation
 ```
 
 ## Routes
 
-| Route           | Purpose                                                         |
-| --------------- | --------------------------------------------------------------- |
-| `/`             | Landing page with product overview and macro-impact preview     |
-| `/how-it-works` | Three-step explanation of the recommendation workflow           |
-| `/planner`      | Interactive macro planner and ranked restaurant recommendations |
+| Route           | Purpose                                                        |
+| --------------- | -------------------------------------------------------------- |
+| `/`             | Landing page with product overview and macro-impact preview    |
+| `/how-it-works` | Three-step explanation of the recommendation workflow          |
+| `/planner`      | Interactive macro planner with live restaurant recommendations |
 
 ## Tech Stack
 
@@ -50,29 +53,30 @@ Optionally generate a “Why this fits” explanation
 * TypeScript
 * Tailwind CSS
 * Google Gemini API via `@google/genai`
-* FatSecret Platform API — server-side OAuth 2.0 integration scaffold
+* FatSecret Platform API with server-side OAuth 2.0 and Premier food search
 
 ## Recommendation Logic
 
-Each menu item is filtered by the selected restaurant chains and scored against the user’s remaining macro targets.
+Calorie Compass separates recommendation logic from its data sources.
 
-The current algorithm:
+For a selected restaurant, the app retrieves live food results from FatSecret, normalizes nutrition fields into a shared menu-item format, filters results to favor complete meals, and scores them against the user’s remaining macro targets.
+
+The algorithm:
 
 * Rewards meals that stay within calorie, protein, carbohydrate, and fat targets
 * Penalizes macro overages, with higher penalties for calories and fat
 * Sorts results by macro-fit score
-* Returns up to 20 recommendations with a plain-English explanation
-
-The recommendation logic is separated from the data source, so mock data can be replaced by normalized FatSecret responses without changing the ranking workflow.
+* Returns up to 20 recommendations
+* Uses representative mock data as a fallback if live search is unavailable
 
 ## AI Explanation Layer
 
-The optional “Why this fits” feature uses Gemini to turn the app’s calculated meal data into a concise, user-friendly explanation.
+The optional “Why this fits” feature uses Gemini to turn an already-calculated recommendation into a concise, user-friendly explanation.
 
-* Calorie Compass calculates the nutrition values, fit score, and ranking first
-* Gemini receives those calculated values and explains why the meal fits
-* Gemini does not choose meals, calculate macros, or invent nutrition data
-* The Gemini API key is used only in a server-side API route
+* Calorie Compass calculates nutrition values, fit scores, and rankings itself
+* Gemini receives the chosen meal and macro targets, then explains why that meal fits
+* Gemini does not choose meals, calculate macros, or alter nutrition data
+* Gemini is called only through a server-side API route
 * Interaction storage is disabled for these explanation requests
 
 ## Project Structure
@@ -80,27 +84,27 @@ The optional “Why this fits” feature uses Gemini to turn the app’s calcula
 ```text
 app/
   api/
-    explain-meal/          # Server-side Gemini “Why this fits” route
-    fatsecret-test/        # Local OAuth connection test
-    food-search/           # FatSecret food-search scaffold
+    explain-meal/         # Server-side Gemini "Why this fits" route
+    fatsecret-test/       # Local FatSecret OAuth connection test
+    food-search/          # FatSecret Premier search and normalization route
   how-it-works/
-    page.tsx               # Workflow explainer route
+    page.tsx              # Workflow explainer route
   planner/
-    page.tsx               # Interactive macro planner route
-  globals.css              # Global styles and animations
-  layout.tsx               # Global layout, metadata, and font configuration
-  page.tsx                 # Landing-page route
+    page.tsx              # Interactive macro planner route
+  globals.css             # Global styles and animations
+  layout.tsx              # Global layout, metadata, and font configuration
+  page.tsx                # Landing-page route
 
 components/
-  AppHeader.tsx            # Shared navigation
-  HowItWorks.tsx           # Reusable workflow explainer
-  LandingHero.tsx          # Landing-page hero
-  MacroBeforeAfter.tsx     # Macro-impact product preview
-  RestaurantMarquee.tsx    # Animated restaurant selection strip
+  AppHeader.tsx           # Shared navigation
+  HowItWorks.tsx          # Reusable workflow explainer
+  LandingHero.tsx         # Landing-page hero
+  MacroBeforeAfter.tsx    # Macro-impact product preview
+  RestaurantMarquee.tsx   # Animated restaurant selection strip
 
 lib/
-  mock-menu-items.ts       # Temporary MVP restaurant menu data
-  recommend-meals.ts       # Macro-fit recommendation algorithm
+  mock-menu-items.ts      # Representative fallback restaurant menu data
+  recommend-meals.ts      # Deterministic macro-fit recommendation algorithm
 ```
 
 ## Local Setup
@@ -118,7 +122,18 @@ cd calorie-compass
 npm install
 ```
 
-3. Start the development server:
+3. Create a `.env.local` file in the project root:
+
+```env
+# Required for live FatSecret food search
+FATSECRET_CLIENT_ID=your_client_id
+FATSECRET_CLIENT_SECRET=your_client_secret
+
+# Required only for Gemini "Why this fits" explanations
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+4. Start the development server:
 
 ```bash
 npm run dev
@@ -126,22 +141,11 @@ npm run dev
 
 Open http://localhost:3000.
 
-4. Create a `.env.local` file in the project root for optional API features:
-
-```env
-# Required only for Gemini “Why this fits” explanations
-GEMINI_API_KEY=your_gemini_api_key
-
-# Required only for local FatSecret OAuth and food-search testing
-FATSECRET_CLIENT_ID=your_client_id
-FATSECRET_CLIENT_SECRET=your_client_secret
-```
-
-The landing page, planner, mock recommendations, and deterministic macro-fit scores work without API credentials.
+The landing page and deterministic recommendation flow run without API credentials. Live restaurant search requires FatSecret credentials, and AI explanations require a Gemini API key.
 
 ## Gemini API Notes
 
-Gemini is used only to explain the recommendation after Calorie Compass has calculated the nutrition values and fit score.
+Gemini is used only to explain a recommendation after Calorie Compass has calculated its nutrition values and fit score.
 
 The API key remains server-side and must never be exposed through a `NEXT_PUBLIC_` environment variable or committed to GitHub.
 
@@ -149,21 +153,24 @@ The API key remains server-side and must never be exposed through a `NEXT_PUBLIC
 
 FatSecret credentials are used only in server-side API routes and are never committed to the repository.
 
-The local OAuth token flow has been validated successfully. Live food search is currently blocked by FatSecret’s Premier-only scope requirement, and Premier Free approval is pending.
+The app uses the OAuth client-credentials flow with Premier access to query FatSecret food-search results. Live results are normalized into the app’s shared menu-item shape before recommendation scoring.
+
+When live results are shown, the planner includes FatSecret attribution. Review FatSecret’s terms of use and attribution requirements before deploying publicly.
 
 ## Roadmap
 
 * [x] Build macro-input and restaurant-selection interface
-* [x] Implement mock restaurant data and macro-fit ranking
-* [x] Validate server-side FatSecret OAuth authentication
-* [x] Scaffold FatSecret food-search API route
+* [x] Implement deterministic macro-fit ranking
 * [x] Build responsive landing, explainer, and planner routes
 * [x] Add macro before-and-after product preview
+* [x] Validate server-side FatSecret OAuth authentication
+* [x] Integrate FatSecret Premier live food search
+* [x] Normalize live food results into a shared menu-item format
 * [x] Add server-side Gemini “Why this fits” explanations
-* [x] Keep Gemini explanations separate from deterministic macro-fit scoring
-* [ ] Integrate live Premier food-search results
-* [ ] Normalize live API responses across restaurant-name and serving-size variations
+* [x] Keep AI explanations separate from deterministic recommendation scoring
+* [ ] Refine meal-candidate filtering and restaurant mappings across all supported chains
 * [ ] Add restaurant locations for the MVP
+* [ ] Cache OAuth tokens and improve live-search resilience
 * [ ] Deploy a public demo using secure server-side environment variables
 
 ## Disclaimer
@@ -172,4 +179,4 @@ Calorie Compass is a portfolio project and is not medical or dietary advice. Nut
 
 AI explanations summarize Calorie Compass’s calculated results and should not be treated as dietary or medical guidance.
 
-Restaurant names are used only to identify representative menu data. Calorie Compass is not affiliated with or endorsed by those restaurants.
+Restaurant names are used to identify restaurant menu data. Calorie Compass is not affiliated with or endorsed by those restaurants.
