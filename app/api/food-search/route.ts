@@ -278,6 +278,9 @@ export async function GET(request: NextRequest) {
       items,
       ...(debug
         ? {
+        providerStatus: foodResponse.status,
+        providerTopLevelKeys: Object.keys(foodData),
+        providerError: (foodData as { error?: unknown }).error ?? null,
         rawCount: foodList.length,
         brandedCount: brandedFoods.length,
         mealCandidateCount: mealCandidates.length,
