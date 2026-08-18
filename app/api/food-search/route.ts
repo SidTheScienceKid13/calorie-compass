@@ -258,19 +258,41 @@ export async function GET(request: NextRequest) {
     const foods = foodData.foods_search?.results?.food ?? [];
     const foodList = Array.isArray(foods) ? foods : [foods];
 
-    const items = foodList
-      .filter((food) =>
+    const brandedFoods = foodList.filter((food) =>
       hasMatchingBrand(food.brand_name, config.brandNames)
-      )
-      .filter((food) => isMealCandidate(food.food_name ?? ""))
+    );
+
+    const mealCandidates = brandedFoods.filter((food) =>
+      isMealCandidate(food.food_name ?? "")
+    );
+
+    const items = mealCandidates
       .map((food) => normalizeFood(food, restaurant))
       .filter((item): item is MenuItem => item !== null);
+
+    const debug = request.nextUrl.searchParams.get("debug") === "1";
 
     return NextResponse.json({
       restaurant,
       count: items.length,
       items,
-    });
+      ...(debug
+        ? {
+        rawCount: foodList.length,
+        brandedCount: brandedFoods.length,
+        mealCandidateCount: mealCandidates.length,
+        brands: [
+          ...new Set(
+            foodList.map((food) => food.brand_name ?? "(missing)")
+          ),
+        ],
+        sampleNames: foodList
+          .slice(0, 10)
+          .map((food) => food.food_name ?? "(missing)"),
+      }
+    : {}),
+});
+
   } catch (error) {
     console.error("FatSecret food search failed:", error);
 
