@@ -290,16 +290,9 @@ async function explainWhyThisFits(item: Recommendation) {
     <h2 className="mb-4 text-xl font-bold">Your best restaurant options</h2>
     {usingLiveData && (
   <p className="mb-4 text-sm text-zinc-400">
-    Live nutrition data powered by{" "}
-    <a
-      href="https://platform.fatsecret.com/"
-      target="_blank"
-      rel="noreferrer"
-      className="text-orange-400 underline underline-offset-4 hover:text-orange-300"
-    >
-      FatSecret
+   <a href="https://platform.fatsecret.com">
+      Powered by fatsecret Platform API
     </a>
-    .
   </p>
 )}
 

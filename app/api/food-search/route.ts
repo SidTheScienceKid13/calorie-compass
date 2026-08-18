@@ -29,7 +29,7 @@ type FatSecretSearchResponse = {
 const restaurantConfigs = {
   Chipotle: {
     searchExpression: "Chipotle Mexican Grill",
-    brandNames: ["Chipotle Mexican Grill"],
+    brandNames: ["Chipotle Mexican Grill",, "Chipotle"],
   },
   "Chick-fil-A": {
     searchExpression: "Chick-fil-A",
@@ -91,6 +91,30 @@ const componentKeywords = [
   "mix",
   "chips",
 ];
+
+function hasMatchingBrand(
+  brandName: string | undefined,
+  expectedBrands: Array<string | undefined>
+): boolean {
+  const normalizedBrand = brandName?.trim().toLowerCase() ?? "";
+
+  if (!normalizedBrand) {
+    return false;
+  }
+
+  return expectedBrands.some((expectedBrand) => {
+    if (!expectedBrand) {
+      return false;
+    }
+    const normalizedExpected = expectedBrand.toLowerCase();
+
+    return (
+      normalizedBrand === normalizedExpected ||
+      normalizedBrand.includes(normalizedExpected) ||
+      normalizedExpected.includes(normalizedBrand)
+    );
+  });
+}
 
 function toNumber(value: string | undefined): number | null {
   const parsed = Number(value);
@@ -213,6 +237,8 @@ export async function GET(request: NextRequest) {
       config.searchExpression
     );
     foodUrl.searchParams.set("max_results", "50");
+    foodUrl.searchParams.set("region", "US");
+    foodUrl.searchParams.set("language", "en");
     foodUrl.searchParams.set("format", "json");
 
     const foodResponse = await fetch(foodUrl, {
@@ -234,7 +260,7 @@ export async function GET(request: NextRequest) {
 
     const items = foodList
       .filter((food) =>
-      config.brandNames.includes(food.brand_name ?? "")
+      hasMatchingBrand(food.brand_name, config.brandNames)
       )
       .filter((food) => isMealCandidate(food.food_name ?? ""))
       .map((food) => normalizeFood(food, restaurant))
