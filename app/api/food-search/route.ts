@@ -270,31 +270,12 @@ export async function GET(request: NextRequest) {
       .map((food) => normalizeFood(food, restaurant))
       .filter((item): item is MenuItem => item !== null);
 
-    const debug = request.nextUrl.searchParams.get("debug") === "1";
 
     return NextResponse.json({
       restaurant,
       count: items.length,
       items,
-      ...(debug
-        ? {
-        providerStatus: foodResponse.status,
-        providerTopLevelKeys: Object.keys(foodData),
-        providerError: (foodData as { error?: unknown }).error ?? null,
-        rawCount: foodList.length,
-        brandedCount: brandedFoods.length,
-        mealCandidateCount: mealCandidates.length,
-        brands: [
-          ...new Set(
-            foodList.map((food) => food.brand_name ?? "(missing)")
-          ),
-        ],
-        sampleNames: foodList
-          .slice(0, 10)
-          .map((food) => food.food_name ?? "(missing)"),
-      }
-    : {}),
-});
+    });
 
   } catch (error) {
     console.error("FatSecret food search failed:", error);
