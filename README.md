@@ -20,6 +20,13 @@ Instead of logging every meal, users enter what they have left for the day, choo
 
 > **Data status:** Live restaurant food search is integrated through FatSecret Premier Free access. Results are normalized into a common menu-item format and filtered to prioritize meal-like items over individual ingredients. If a live request is unavailable, the planner uses representative fallback data so the core recommendation flow remains usable.
 
+## Live Demo
+
+Try the deployed app: [Calorie Compass](https://calorie-compass-beige.vercel.app)
+
+* [Landing page](https://calorie-compass-beige.vercel.app)
+* [Open the meal planner](https://calorie-compass-beige.vercel.app/planner)
+
 ## Demo Flow
 
 ```text
@@ -168,10 +175,12 @@ When live results are shown, the planner includes FatSecret attribution. Review 
 * [x] Normalize live food results into a shared menu-item format
 * [x] Add server-side Gemini “Why this fits” explanations
 * [x] Keep AI explanations separate from deterministic recommendation scoring
-* [ ] Refine meal-candidate filtering and restaurant mappings across all supported chains
-* [ ] Add restaurant locations for the MVP
+* [x] Deploy a public demo using secure server-side environment variables
+* [x] Test live search across every supported restaurant chain
+* [ ] Refine meal-candidate filtering and restaurant-brand mappings
 * [ ] Cache OAuth tokens and improve live-search resilience
-* [ ] Deploy a public demo using secure server-side environment variables
+* [ ] Add automated tests for recommendation scoring and API-response normalization
+* [ ] Add more restaurant locations
 
 ## Disclaimer
 
