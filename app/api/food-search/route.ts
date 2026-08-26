@@ -1,22 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { MenuItem } from "../../../lib/mock-menu-items";
-
-type FatSecretServing = {
-  serving_id?: string;
-  calories?: string;
-  protein?: string;
-  carbohydrate?: string;
-  fat?: string;
-};
-
-type FatSecretFood = {
-  food_id?: string;
-  food_name?: string;
-  brand_name?: string;
-  servings?: {
-    serving?: FatSecretServing | FatSecretServing[];
-  };
-};
+import {
+  normalizeFood,
+  type FatSecretFood,
+} from "../../../lib/fatsecret-normalization";
 
 type FatSecretSearchResponse = {
   foods_search?: {
@@ -29,7 +16,7 @@ type FatSecretSearchResponse = {
 const restaurantConfigs = {
   Chipotle: {
     searchExpression: "Chipotle Mexican Grill",
-    brandNames: ["Chipotle Mexican Grill",, "Chipotle"],
+    brandNames: ["Chipotle Mexican Grill", "Chipotle"],
   },
   "Chick-fil-A": {
     searchExpression: "Chick-fil-A",
@@ -116,60 +103,18 @@ function hasMatchingBrand(
   });
 }
 
-function toNumber(value: string | undefined): number | null {
-  const parsed = Number(value);
-
-  return Number.isFinite(parsed) ? Math.round(parsed) : null;
-}
-
 function isMealCandidate(name: string): boolean {
   const normalizedName = name.toLowerCase();
 
   const hasMealKeyword = mealKeywords.some((keyword) =>
-    normalizedName.includes(keyword)
+    normalizedName.includes(keyword),
   );
 
   const hasComponentKeyword = componentKeywords.some((keyword) =>
-    normalizedName.includes(keyword)
+    normalizedName.includes(keyword),
   );
 
   return hasMealKeyword && !hasComponentKeyword;
-}
-
-function normalizeFood(
-  food: FatSecretFood,
-  restaurant: string
-): MenuItem | null {
-  const servings = food.servings?.serving;
-  const serving = Array.isArray(servings) ? servings[0] : servings;
-
-  if (!food.food_id || !food.food_name || !serving?.serving_id) {
-    return null;
-  }
-
-  const calories = toNumber(serving.calories);
-  const protein = toNumber(serving.protein);
-  const carbs = toNumber(serving.carbohydrate);
-  const fat = toNumber(serving.fat);
-
-  if (
-    calories === null ||
-    protein === null ||
-    carbs === null ||
-    fat === null
-  ) {
-    return null;
-  }
-
-  return {
-    id: `fatsecret-${food.food_id}-${serving.serving_id}`,
-    restaurant,
-    name: food.food_name,
-    calories,
-    protein,
-    carbs,
-    fat,
-  };
 }
 
 export async function GET(request: NextRequest) {
