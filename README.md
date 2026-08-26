@@ -62,6 +62,12 @@ Optionally generate a Gemini “Why this fits” explanation
 * Google Gemini API via `@google/genai`
 * FatSecret Platform API with server-side OAuth 2.0 and Premier food search
 
+## CI Quality Gate
+
+GitHub Actions runs ESLint, Vitest unit tests with coverage, and a production Next.js build on every push and pull request targeting `main`.
+
+The `Lint, test, and build` check must pass before a pull request can merge into `main`.
+
 ## Quality Checks
 
 GitHub Actions runs the following checks on every push and pull request:
