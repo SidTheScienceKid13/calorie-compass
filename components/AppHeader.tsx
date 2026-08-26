@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Compass } from "lucide-react";
 import { FaGithub } from "react-icons/fa";
 
@@ -5,30 +6,30 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur">
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <a
+        <Link
           href="/"
           className="flex items-center gap-2 font-bold tracking-tight text-white"
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500 text-black">
-            <Compass size={18} strokeWidth={2.5} />
+            <Compass size={18} strokeWidth={2.6} />
           </span>
           Calorie Compass
-        </a>
+        </Link>
 
         <div className="flex items-center gap-5">
-        <a
+          <Link
             href="/how-it-works"
             className="rounded-lg border border-white/10 px-3 py-1.5 text-sm text-zinc-300 transition hover:border-orange-400 hover:text-white"
-        >
+          >
             How it works
-        </a>
+          </Link>
 
           <a
             href="https://github.com/SidTheScienceKid13/calorie-compass"
             target="_blank"
             rel="noreferrer"
             aria-label="View Calorie Compass source code on GitHub"
-            className="rounded-lg border border-white/10 p-2 text-zinc-300 transition hover:border-orange-500 hover:text-orange-400"
+            className="rounded-lg border border-white/10 p-2 text-zinc-300 transition hover:border-orange-400 hover:text-orange-400"
           >
             <FaGithub size={18} />
           </a>
