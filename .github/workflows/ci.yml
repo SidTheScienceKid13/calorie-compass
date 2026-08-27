@@ -39,3 +39,22 @@ jobs:
 
       - name: Build Docker image
         run: docker build --tag calorie-compass:${{ github.sha }} .
+
+      - name: Start Docker container
+        run: docker run -d --name calorie-compass -p 3000:3000 calorie-compass:${{ github.sha }}
+
+      - name: Verify container serves the application
+        run: |
+          for i in {1..20}; do
+            if curl --fail --silent http://localhost:3000 > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker logs calorie-compass
+          exit 1
+
+      - name: Stop Docker container
+        if: always()
+        run: docker rm --force calorie-compass || true
